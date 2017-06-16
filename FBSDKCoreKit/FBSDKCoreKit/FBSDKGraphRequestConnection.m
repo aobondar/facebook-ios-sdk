@@ -701,6 +701,10 @@ NSURLSessionDataDelegate
     if (!resultError && [result isKindOfClass:[NSDictionary class]]) {
       NSDictionary *resultDictionary = [FBSDKTypeUtility dictionaryValue:result];
       body = [FBSDKTypeUtility dictionaryValue:resultDictionary[@"body"]];
+      if (body == nil) {
+        // batch requests can return array instead of dictionary
+        body = [FBSDKTypeUtility arrayValue:resultDictionary[@"body"]];
+      }
     }
 
 #if !TARGET_OS_TV
@@ -723,10 +727,11 @@ NSURLSessionDataDelegate
   }
 }
 
-- (void)processResultBody:(NSDictionary *)body error:(NSError *)error metadata:(FBSDKGraphRequestMetadata *)metadata canNotifyDelegate:(BOOL)canNotifyDelegate
+- (void)processResultBody:(id)body error:(NSError *)error metadata:(FBSDKGraphRequestMetadata *)metadata canNotifyDelegate:(BOOL)canNotifyDelegate
 {
   void (^finishAndInvokeCompletionHandler)(void) = ^{
-    NSDictionary *graphDebugDict = [body objectForKey:@"__debug__"];
+    NSDictionary * bodyDictionary = [FBSDKTypeUtility dictionaryValue:body];
+    NSDictionary *graphDebugDict = [bodyDictionary objectForKey:@"__debug__"];
     if ([graphDebugDict isKindOfClass:[NSDictionary class]]) {
       [self processResultDebugDictionary: graphDebugDict];
     }
